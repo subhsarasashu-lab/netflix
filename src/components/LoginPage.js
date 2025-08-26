@@ -2,35 +2,59 @@ import React, { useRef } from 'react'
 import Header from './Header'
 import { backgroundImg } from '../utils/mock'
 import { useState } from 'react';
-import { checkValidData, auth } from "../utils/validation.js";
+import { checkValidData } from "../utils/validation.js";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../utils/firebase.js';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { addUser } from '../utils/userSlice.js';
+import { useSelector } from 'react-redux';
 
 
 const LoginPage = () => {
-  const email = useRef();
-  const password = useRef();
+  const email = useRef(null);
+  const password = useRef(null);
 
   const [errorMsg, setErrorMsg] = useState(null);
   const [isSignInForm, setisSignInForm] = useState(true);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  
+  
+    const state = useSelector((state) => state.user);
   function toggleSignInForm() {
     setisSignInForm(pr => !pr);
   }
-  const handleClick = () => {
+const handleClick = () => {
     const userId = email.current.value;
     const pass = password.current.value;
     const error = checkValidData(userId, pass);
     setErrorMsg(error);
     if (error) return;
     if (!isSignInForm) {
-      createUserWithEmailAndPassword(auth, userId, pass).then((userCredential) => { const user = userCredential.user }).catch((error) => {
+      createUserWithEmailAndPassword(auth, userId, pass).then((userCredential) => {
+        const user = userCredential.user;
+        
+        
+       }).catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
       });
     }
     else {
-      signInWithEmailAndPassword(auth, userId, pass).then((userCredential) => { const user = userCredential.user; }).catch((error) => {
+      signInWithEmailAndPassword(auth, userId, pass).then((userCredential) => {
+        const user = userCredential.user;
+        
+        dispatch(addUser(user));
+        navigate("/browse");
+        
+          console.log(state);
+        
+       }).catch((error) => {
         const errorCode = error.code;
-        const errorMessage = error.message;
+         const errorMessage = error.message;
+         errorCode ? setErrorMsg("Email not registered") : setErrorMsg(null);
       });
     }
   }
@@ -63,7 +87,7 @@ const LoginPage = () => {
           {isSignInForm ? "Sign In" : "Sign Up"}
         </button>
         <p className="text-white" onClick={toggleSignInForm}>
-          {isSignInForm
+          {!isSignInForm
             ? "Already a user ? Sign In"
             : "New to Netflix ? Sign Up Now"}
         </p> 
