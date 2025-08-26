@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import Header from './Header'
 import { backgroundImg } from '../utils/mock'
 import { useState } from 'react';
@@ -8,33 +8,47 @@ import { auth } from '../utils/firebase.js';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addUser } from '../utils/userSlice.js';
-import { useSelector } from 'react-redux';
+import { updateProfile } from 'firebase/auth';
 
 
 const LoginPage = () => {
   const email = useRef(null);
   const password = useRef(null);
+  const fullName = useRef(null);
 
   const [errorMsg, setErrorMsg] = useState(null);
   const [isSignInForm, setisSignInForm] = useState(true);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  
-  
-    const state = useSelector((state) => state.user);
+
   function toggleSignInForm() {
     setisSignInForm(pr => !pr);
   }
-const handleClick = () => {
+  const handleClick = () => {
+   
     const userId = email.current.value;
     const pass = password.current.value;
     const error = checkValidData(userId, pass);
     setErrorMsg(error);
     if (error) return;
     if (!isSignInForm) {
+        const name = fullName.current.value;
       createUserWithEmailAndPassword(auth, userId, pass).then((userCredential) => {
         const user = userCredential.user;
+        console.log(user);
+        updateProfile(user, {
+             
+              displayName: name, // Replace with the actual display name
+            })
+              .then(() => {
+                // Profile updated successfully
+                console.log("Display name set!");
+              })
+              .catch((error) => {
+                // Handle errors during profile update
+                console.error("Error updating profile:", error);
+              });
         
         
        }).catch((error) => {
@@ -45,11 +59,14 @@ const handleClick = () => {
     else {
       signInWithEmailAndPassword(auth, userId, pass).then((userCredential) => {
         const user = userCredential.user;
+        const userInfo = {};
+        userInfo.name = user.displayName;
+        userInfo.email = user.email;
         
-        dispatch(addUser(user));
+        dispatch(addUser(userInfo));
         navigate("/browse");
         
-          console.log(state);
+          
         
        }).catch((error) => {
         const errorCode = error.code;
@@ -64,7 +81,8 @@ const handleClick = () => {
       <Header />
       <form onSubmit={(e)=>e.preventDefault()} className="bg-black text-white absolute opacity-85 p-5 rounded-md h-auto mx-auto top-48 right-0 left-0 w-4/12 ">
         <h1 className="mx-2">{isSignInForm ? "Sign In" : "Sign Up"}</h1>
-        {!isSignInForm ?   <input
+        {!isSignInForm ? <input
+          ref={fullName}
           type="text"
           placeholder="full name"
           className="p-2 m-2 bg-gray-600 w-11/12 text-white rounded-md"

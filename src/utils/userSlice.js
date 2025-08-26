@@ -5,15 +5,16 @@ const userSlice = createSlice(
     {
         name: "user",
         initialState: {
-            userName: "",
+            
             userId: "",
-           
+           fullName:"",
         },
         reducers: {
             addUser: (state, action) => {
-                console.log(action.payload.user.displayName);
-                state.userName = action.payload.user.displayName;
-                state.userId = action.payload.user.email;
+                state.userId = action.payload.email;
+                state.fullName = action.payload.name;
+                  localStorage.setItem("userName", state.userId);
+                  localStorage.setItem("fullName", state.fullName);
                 
             }
             
